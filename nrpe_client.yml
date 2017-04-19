@@ -1,28 +1,39 @@
 ---
 - hosts: all
-  remote_user: xxxxxx
+  remote_user: user
   become: yes
   become_method: su
+
+  vars:
+  - dwnl_dir: /tmp
+
   tasks:
     - name: Create nagios
       user: name=nagios shell=/bin/bash home=/opt/nagios groups=nagios generate_ssh_key=yes ssh_key_bits=2048
     - name: Set password to user
-      shell: echo nagios:secretpasswd | sudo chpasswd
+      shell: echo nagios:secretpass | sudo chpasswd
       no_log: True
-    - name: install the latest version of Wget
-      yum:
-        name: wget
-        state: latest
+    - name: Install list of packages
+      yum: name={{item}} state=installed
+      with_items:
+           - wget
+           - mlocate
+           - net-tools
     - name: Add epel repository public key
       rpm_key:
         key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
         state: present
-    - name: Download EPEL YUM repo
-      shell: wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -P /tmp
+    - name: Download EPEL YUM repo & monitoring-plugins
+      get_url: url={{item}}  dest={{dwnl_dir}} mode=0444
+      with_items:
+      - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     - name: Install EPEL YUM repo
       shell: rpm -ivh /tmp/epel-release-latest-7.noarch.rpm
-    - name: install the latest version of NRPE from epel repo
-      yum: pkg=nrpe state=installed
+    - name: Install nrpe and nagios-plugins-all
+      yum: name={{item}} state=installed
+      with_items:
+           - nrpe
+           - nagios-plugins-all
     - name: Add local ip to allowed_hosts on /etc/nagios/nrpe.cfg
       lineinfile: dest=/etc/nagios/nrpe.cfg regexp='^allowed_hosts.*' line='allowed_hosts=127.0.0.1,x.x.x.x' state=present
       notify:
