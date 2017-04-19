@@ -1,9 +1,12 @@
-#
-# Sometimes, hosts have SSH Host Key Cheking enabled and you can't log in with SSH until it is added to known_hosts list.
-# To avoid having to login in first time before playing ansible playbooks, you can user this trick
-#
-# For general use: /etc/sshd/sshd_config
-# For only one user: /home/user/.ssh/config
+
+Sometimes, hosts have SSH Host Key Cheking enabled and you can't log in with SSH until it is added to known_hosts list.
+To avoid having to login in first time before playing ansible playbooks, you can user this trick
+
+For general use: /etc/sshd/sshd_config
+For only one user: /home/user/.ssh/config
+
+´´´
 Host x.x.x.*
    StrictHostKeyChecking no
    UserKnownHostsFile=/dev/null
+´´´
