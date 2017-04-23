@@ -23,12 +23,10 @@
       rpm_key:
         key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
         state: present
-    - name: Download EPEL YUM repo & monitoring-plugins
-      get_url: url={{item}}  dest={{dwnl_dir}} mode=0444
+    - name: install the epel repo rpm from a url
+      yum: name={{item}} state=present
       with_items:
       - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-    - name: Install EPEL YUM repo
-      shell: rpm -ivh /tmp/epel-release-latest-7.noarch.rpm
     - name: Install nrpe and nagios-plugins-all
       yum: name={{item}} state=installed
       with_items:
