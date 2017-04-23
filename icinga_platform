@@ -1,0 +1,83 @@
+---
+- hosts: all
+  sudo: yes
+
+  tasks:
+    - name: Install list of packages
+      yum: name={{item}} state=installed
+      with_items:
+           - wget
+           - mlocate
+           - net-tools
+           - vim
+      
+    - name: Add epel repository public key
+      rpm_key:
+        key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+        state: present
+    - name: Install Icinga repo key
+      shell: rpm --import http://packages.icinga.com/icinga.key    
+ 
+    - name: install the epel and icinga repos rpms
+      yum: name={{item}} state=present
+      with_items:
+      - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+      - https://packages.icinga.com/epel/7/release/noarch/icinga-rpm-release-7-1.el7.centos.noarch.rpm
+      
+    - name: Install icinga2 and nagios-plugins-all
+      yum: name={{item}} state=installed
+      with_items:
+           - icinga2
+           - nagios-plugins-all
+           - vim-icinga2
+    - name: ensure icinga2 is running (and enable it at boot)
+      service: name=icinga2 state=started enabled=yes  
+     
+    - name: Initiate locatedb
+      shell: updatedb
+
+    - name: Create a new file
+      file: path=/home/ec2-user/.vimrc state=touch
+  
+    - name: Syntax Highlighting using Vim
+      lineinfile: dest=/home/ec2-user/.vimrc line='syntax on' state=present
+      
+
+- hosts: icinga-masters
+  sudo: yes     
+   
+  tasks:
+    - name: Install ido-mysql
+      yum: name={{item}} state=installed
+      with_items:
+        - icinga2-ido-mysql
+        - httpd
+
+    - name: ensure apache is running (and enable it at boot)
+      service: name=httpd state=started enabled=yes 
+      
+    - name: Enable ido-mysql
+      shell: icinga2 feature enable ido-mysq
+      
+    - name: Set some ido-mysql parameters
+      lineinfile:
+        dest: /etc/icinga2/features-enabled/ido-mysql.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      with_items:
+        - { regexp: '^  //user = "icinga"', line: '  user = "icinga"' }
+        - { regexp: '^  //password = "icinga"', line: '  password = "secretpass"' }
+        - { regexp: '^  //host = "localhost""', line: '  host = "localhost""' }          
+        - { regexp: '^  //database = "icinga"', line: '  database = "icinga"' }
+      notify:
+        - restart icinga2
+      
+    - name: Enable command 
+      shell: icinga2 feature enable command
+      notify:
+      - restart icinga2     
+      
+      
+  handlers:
+    - name: restart icinga2
+      service: name=icinga2 state=restart
