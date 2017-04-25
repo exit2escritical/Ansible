@@ -47,4 +47,11 @@
      mysql_db:
        name: icinga
        state: present
+  
+    - name: create user icinga for database icinga 
+      mysql_user:
+        name: icinga
+        password: password
+        priv: '*.*:ALL,GRANT'
+        state: present
 
