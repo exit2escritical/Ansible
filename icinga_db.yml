@@ -9,6 +9,7 @@
     - name: Install MySQL
       action: yum name={{item}}
       with_items:
+        - icinga2-ido-mysql
         - MySQL-python
         - mariadb
         - mariadb-server
@@ -54,4 +55,9 @@
         password: password
         priv: '*.*:ALL,GRANT'
         state: present
-
+        
+    - name: Apply icinga ido-mysql db schema
+      mysql_db:
+        state: import
+        name: all
+        target: /usr/share/icinga2-ido-mysql/schema/mysql.sql
