@@ -10,6 +10,7 @@
            - mlocate
            - net-tools
            - vim
+           - telnet
       
     - name: Add epel repository public key
       rpm_key:
